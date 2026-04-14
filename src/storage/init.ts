@@ -3,6 +3,10 @@ import { initialTasks, initialUsers, initialSkills } from '../mock/sample-data';
 import type { Task } from '../types';
 import { STORAGE_KEYS } from '../types';
 
+interface OldTask extends Task {
+  assigneeId?: string;
+}
+
 /**
  * 数据迁移：将旧版任务数据（assigneeId）迁移到新版（assignees[]）
  */
@@ -10,7 +14,7 @@ function migrateTasks(tasks: Task[]): Task[] {
   let changed = false;
   const migrated = tasks.map(task => {
     // 旧版数据使用 assigneeId，新版使用 assignees[]
-    const hasOldSchema = 'assigneeId' in task && task.assigneeId && !task.assignees;
+    const hasOldSchema = 'assigneeId' in task && (task as OldTask).assigneeId && !task.assignees;
     const needsSubmissions = !task.submissions;
     const needsContributors = !task.contributors;
     const needsMaxAssignees = !task.maxAssignees;
@@ -19,11 +23,11 @@ function migrateTasks(tasks: Task[]): Task[] {
       changed = true;
       const newTask = { ...task } as Task;
       // 迁移 assigneeId -> assignees
-      if (hasOldSchema && task.assigneeId) {
-        const user = initialUsers.find(u => u.id === task.assigneeId);
+      if (hasOldSchema && (task as OldTask).assigneeId) {
+        const user = initialUsers.find(u => u.id === (task as OldTask).assigneeId);
         newTask.assignees = [{
-          userId: task.assigneeId!,
-          name: user?.name || task.assigneeId!,
+          userId: (task as OldTask).assigneeId!,
+          name: user?.name || (task as OldTask).assigneeId!,
           avatar: user?.avatar,
           weight: 100,
           joinedAt: task.createdAt,
