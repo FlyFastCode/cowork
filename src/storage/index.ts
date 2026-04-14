@@ -138,6 +138,12 @@ export const skillStorage = {
       this.save(skills);
     }
   },
+
+  add(skill: Skill): void {
+    const skills = this.getAll();
+    skills.push(skill);
+    this.save(skills);
+  },
 };
 
 // 当前用户相关操作

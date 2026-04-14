@@ -12,12 +12,14 @@ export function TaskCard({ task, publisher, onClick }: TaskCardProps) {
     available: 'bg-green-100 text-green-700',
     'in-progress': 'bg-yellow-100 text-yellow-700',
     completed: 'bg-gray-100 text-gray-700',
+    packaged: 'bg-purple-100 text-purple-700',
   };
 
   const statusText = {
     available: '可接取',
     'in-progress': '进行中',
     completed: '已完成',
+    packaged: '已封装',
   };
 
   return (

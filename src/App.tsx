@@ -8,6 +8,7 @@ import { UserPlazaPage } from './components/plaza/UserPlazaPage';
 import { MarketplacePage } from './components/marketplace/MarketplacePage';
 import { AchievementPage } from './components/achievement/AchievementPage';
 import { TaskMatchingPage } from './components/matching/TaskMatchingPage';
+import { MyTasksPage } from './components/workspace/MyTasksPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route index element={<DashboardPage />} />
             <Route path="task-publish" element={<TaskPublishPage />} />
             <Route path="task-plaza" element={<TaskPlazaPage />} />
+            <Route path="my-tasks" element={<MyTasksPage />} />
             <Route path="task-matching" element={<TaskMatchingPage />} />
             <Route path="user-plaza" element={<UserPlazaPage />} />
             <Route path="marketplace" element={<MarketplacePage />} />

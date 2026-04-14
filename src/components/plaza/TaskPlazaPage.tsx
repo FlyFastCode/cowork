@@ -7,12 +7,14 @@ import { Search } from 'lucide-react';
 import type { SkillTag, Task, TaskStatus } from '../../types';
 
 export function TaskPlazaPage() {
-  const { tasks, updateTaskStatus } = useTasks();
-  const { getUserById } = useUsers();
+  const { tasks, addAssignee } = useTasks();
+  const { state, getUserById } = useUsers();
   const [selectedTag, setSelectedTag] = useState<SkillTag | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
+
+  const currentUser = state.currentUser;
 
   // 获取所有标签
   const allTags = useMemo(() => {
@@ -24,7 +26,8 @@ export function TaskPlazaPage() {
   // 过滤任务
   const filteredTasks = useMemo(() => {
     return tasks.filter((task: Task) => {
-      // 状态过滤
+      // 状态过滤 (don't show packaged tasks in plaza)
+      if (task.status === 'packaged') return false;
       if (statusFilter !== 'all' && task.status !== statusFilter) {
         return false;
       }
@@ -46,8 +49,26 @@ export function TaskPlazaPage() {
 
   // 接取任务
   const handleTakeTask = (taskId: string) => {
-    updateTaskStatus(taskId, 'in-progress');
-    setSelectedTask(null);
+    if (!currentUser) return;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    if (task.assignees.some(a => a.userId === currentUser.id)) return;
+    if (task.assignees.length >= (task.maxAssignees || 3)) return;
+
+    addAssignee(taskId, {
+      userId: currentUser.id,
+      name: currentUser.name,
+      avatar: currentUser.avatar,
+      weight: 0,
+      joinedAt: new Date().toISOString().split('T')[0],
+    });
+    // Refresh selected task
+    setSelectedTask(tasks.find(t => t.id === taskId) || null);
+  };
+
+  // 加入协作
+  const handleJoinTask = (taskId: string) => {
+    handleTakeTask(taskId);
   };
 
   return (
@@ -125,6 +146,7 @@ export function TaskPlazaPage() {
           publisher={selectedTask.publisherId ? getUserById(selectedTask.publisherId) : undefined}
           onClose={() => setSelectedTask(null)}
           onTake={handleTakeTask}
+          onJoin={handleJoinTask}
         />
       )}
     </div>

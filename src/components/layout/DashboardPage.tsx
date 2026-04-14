@@ -1,10 +1,12 @@
-import { PlusCircle, Target, Users, ShoppingBag, Trophy, ArrowRight } from 'lucide-react';
+import { PlusCircle, Target, Users, ShoppingBag, Trophy, ArrowRight, Briefcase, GitCompare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useStats } from '../../hooks/useData';
+import { useStats, useUsers } from '../../hooks/useData';
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const stats = useStats();
+  const { state } = useUsers();
+  const currentUser = state.currentUser;
 
   const cards = [
     {
@@ -22,6 +24,22 @@ export function DashboardPage() {
       color: 'from-blue-500 to-cyan-600',
       path: '/task-plaza',
       stats: `${stats.taskStats.total} 个总任务`,
+    },
+    {
+      title: '我的任务',
+      description: '管理你发布和参与的任务，提交成果',
+      icon: Briefcase,
+      color: 'from-indigo-500 to-violet-600',
+      path: '/my-tasks',
+      stats: `${stats.taskStats.inProgress} 个进行中`,
+    },
+    {
+      title: '任务匹配',
+      description: '查看与你技能最匹配的任务',
+      icon: GitCompare,
+      color: 'from-teal-500 to-green-600',
+      path: '/task-matching',
+      stats: `${stats.taskStats.available} 个可匹配任务`,
     },
     {
       title: '用户广场',
@@ -53,6 +71,15 @@ export function DashboardPage() {
     <div className="max-w-6xl mx-auto">
       {/* 欢迎区域 */}
       <div className="text-center mb-12">
+        {/* Current user indicator */}
+        {currentUser && (
+          <div className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border mb-6">
+            <img src={currentUser.avatar} alt={currentUser.name} className="w-6 h-6 rounded-full bg-gray-100" />
+            <span className="text-sm text-gray-600">当前用户：</span>
+            <span className="text-sm font-semibold text-gray-900">{currentUser.name}</span>
+            <span className="text-xs text-gray-400">（可在右上角切换）</span>
+          </div>
+        )}
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
           欢迎使用 SkillCollab
         </h1>
@@ -102,7 +129,7 @@ export function DashboardPage() {
       {/* 快捷提示 */}
       <div className="mt-12 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 text-center">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          💡 快速开始
+          快速开始
         </h2>
         <p className="text-gray-600">
           当前为演示模式，数据存储在本地浏览器中

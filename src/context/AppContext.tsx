@@ -6,7 +6,7 @@ import {
   useMemo,
   type ReactNode,
 } from 'react';
-import type { AppState, Task, User, Skill, TaskStatus } from '../types';
+import type { AppState, Task, User, Skill, TaskStatus, TaskAssignee, TaskSubmission, SubmissionStatus } from '../types';
 import { taskStorage, userStorage, skillStorage, currentUserStorage } from '../storage';
 
 // 初始状态
@@ -25,6 +25,7 @@ type Action =
   | { type: 'ADD_TASK'; payload: Task }
   | { type: 'UPDATE_TASK'; payload: Task }
   | { type: 'SET_SKILLS'; payload: Skill[] }
+  | { type: 'ADD_SKILL'; payload: Skill }
   | { type: 'UPDATE_SKILL'; payload: Skill }
   | { type: 'SET_CURRENT_USER'; payload: User | null }
   | { type: 'UPDATE_USER'; payload: User }
@@ -46,6 +47,8 @@ function appReducer(state: AppState, action: Action): AppState {
       };
     case 'SET_SKILLS':
       return { ...state, skills: action.payload };
+    case 'ADD_SKILL':
+      return { ...state, skills: [...state.skills, action.payload] };
     case 'UPDATE_SKILL':
       return {
         ...state,
@@ -78,7 +81,14 @@ interface AppContextType {
   state: AppState;
   addTask: (task: Task) => void;
   updateTask: (task: Task) => void;
-  updateTaskStatus: (taskId: string, status: TaskStatus, assigneeId?: string) => void;
+  updateTaskStatus: (taskId: string, status: TaskStatus) => void;
+  addAssignee: (taskId: string, assignee: TaskAssignee) => void;
+  removeAssignee: (taskId: string, userId: string) => void;
+  addSubmission: (taskId: string, submission: TaskSubmission) => void;
+  updateSubmissionStatus: (taskId: string, submissionId: string, status: SubmissionStatus) => void;
+  removeSubmission: (taskId: string, submissionId: string) => void;
+  completeTask: (taskId: string) => void;
+  addSkill: (skill: Skill) => void;
   updateSkill: (skill: Skill) => void;
   setCurrentUser: (user: User | null) => void;
   updateUser: (user: User) => void;
@@ -105,16 +115,111 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // 更新任务状态
   const updateTaskStatus = useCallback(
-    (taskId: string, status: TaskStatus, assigneeId?: string) => {
+    (taskId: string, status: TaskStatus) => {
       const task = taskStorage.getById(taskId);
       if (task) {
-        const updatedTask = { ...task, status, assigneeId };
+        const updatedTask = { ...task, status };
         dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
         taskStorage.update(updatedTask);
       }
     },
     []
   );
+
+  // 添加协作者
+  const addAssignee = useCallback((taskId: string, newAssignee: TaskAssignee) => {
+    const task = taskStorage.getById(taskId);
+    if (task) {
+      const updatedTask = {
+        ...task,
+        assignees: [...task.assignees, newAssignee],
+        status: task.status === 'available' ? ('in-progress' as TaskStatus) : task.status,
+      };
+      dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
+      taskStorage.update(updatedTask);
+    }
+  }, []);
+
+  // 移除协作者
+  const removeAssignee = useCallback((taskId: string, userId: string) => {
+    const task = taskStorage.getById(taskId);
+    if (task) {
+      const updatedTask = {
+        ...task,
+        assignees: task.assignees.filter(a => a.userId !== userId),
+      };
+      dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
+      taskStorage.update(updatedTask);
+    }
+  }, []);
+
+  // 添加提交
+  const addSubmission = useCallback((taskId: string, submission: TaskSubmission) => {
+    const task = taskStorage.getById(taskId);
+    if (task) {
+      const updatedTask = {
+        ...task,
+        submissions: [...task.submissions, submission],
+      };
+      dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
+      taskStorage.update(updatedTask);
+    }
+  }, []);
+
+  // 更新提交状态
+  const updateSubmissionStatus = useCallback((taskId: string, submissionId: string, status: SubmissionStatus) => {
+    const task = taskStorage.getById(taskId);
+    if (task) {
+      const updatedSubmissions = task.submissions.map(s =>
+        s.id === submissionId ? { ...s, status } : s
+      );
+      const updatedTask = { ...task, submissions: updatedSubmissions };
+
+      // 如果审核通过，添加该用户到 contributors
+      if (status === 'approved') {
+        const submission = task.submissions.find(s => s.id === submissionId);
+        if (submission && !updatedTask.contributors.includes(submission.userId)) {
+          updatedTask.contributors = [...updatedTask.contributors, submission.userId];
+        }
+      }
+
+      dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
+      taskStorage.update(updatedTask);
+    }
+  }, []);
+
+  // 删除提交
+  const removeSubmission = useCallback((taskId: string, submissionId: string) => {
+    const task = taskStorage.getById(taskId);
+    if (task) {
+      const updatedTask = {
+        ...task,
+        submissions: task.submissions.filter(s => s.id !== submissionId),
+      };
+      dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
+      taskStorage.update(updatedTask);
+    }
+  }, []);
+
+  // 完成任务
+  const completeTask = useCallback((taskId: string) => {
+    const task = taskStorage.getById(taskId);
+    if (task) {
+      const updatedTask = {
+        ...task,
+        status: 'completed' as TaskStatus,
+        completedAt: new Date().toISOString().split('T')[0],
+      };
+      dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
+      taskStorage.update(updatedTask);
+    }
+  }, []);
+
+  // 添加 Skill
+  const addSkill = useCallback((skill: Skill) => {
+    dispatch({ type: 'ADD_SKILL', payload: skill });
+    skillStorage.add(skill);
+  }, []);
 
   // 更新 Skill
   const updateSkill = useCallback((skill: Skill) => {
@@ -155,12 +260,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addTask,
       updateTask,
       updateTaskStatus,
+      addAssignee,
+      removeAssignee,
+      addSubmission,
+      updateSubmissionStatus,
+      removeSubmission,
+      completeTask,
+      addSkill,
       updateSkill,
       setCurrentUser,
       updateUser,
       resetData,
     }),
-    [state, addTask, updateTask, updateTaskStatus, updateSkill, setCurrentUser, updateUser, resetData]
+    [state, addTask, updateTask, updateTaskStatus, addAssignee, removeAssignee, addSubmission, updateSubmissionStatus, removeSubmission, completeTask, addSkill, updateSkill, setCurrentUser, updateUser, resetData]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

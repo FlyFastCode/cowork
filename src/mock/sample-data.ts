@@ -1,4 +1,4 @@
-import type { User, Task, Skill } from '../types';
+import type { User, Task, Skill, TaskAssignee, TaskSubmission } from '../types';
 
 // 初始用户数据 - 12 个用户，涵盖不同技能专长
 export const initialUsers: User[] = [
@@ -160,6 +160,26 @@ export const initialUsers: User[] = [
   },
 ];
 
+// 辅助函数：查找用户名称
+const findName = (userId: string): string => initialUsers.find(u => u.id === userId)?.name || '';
+const findAvatar = (userId: string): string | undefined => initialUsers.find(u => u.id === userId)?.avatar;
+
+const assignee = (userId: string, weight: number, joinedAt: string): TaskAssignee => ({
+  userId,
+  name: findName(userId),
+  avatar: findAvatar(userId),
+  weight,
+  joinedAt,
+});
+
+const submission = (
+  id: string, taskId: string, userId: string, content: string,
+  type: TaskSubmission['type'], status: TaskSubmission['status'],
+  timestamp: string, version: number
+): TaskSubmission => ({
+  id, taskId, userId, userName: findName(userId), content, type, status, timestamp, version,
+});
+
 // 初始任务数据
 export const initialTasks: Task[] = [
   {
@@ -176,6 +196,11 @@ export const initialTasks: Task[] = [
     reward: 5000,
     status: 'available',
     publisherId: 'u3',
+    publisherName: '王五',
+    assignees: [],
+    submissions: [],
+    contributors: [],
+    maxAssignees: 3,
     createdAt: '2024-10-01',
     tags: ['Python', '爬虫', 'TTS', '视频剪辑', 'FFmpeg'],
   },
@@ -191,6 +216,11 @@ export const initialTasks: Task[] = [
     reward: 8000,
     status: 'available',
     publisherId: 'u1',
+    publisherName: '张三',
+    assignees: [],
+    submissions: [],
+    contributors: [],
+    maxAssignees: 3,
     createdAt: '2024-10-05',
     tags: ['React', 'TypeScript', 'UI Design'],
   },
@@ -206,7 +236,18 @@ export const initialTasks: Task[] = [
     reward: 10000,
     status: 'in-progress',
     publisherId: 'u7',
-    assigneeId: 'u3',
+    publisherName: '小明',
+    assignees: [
+      assignee('u3', 60, '2024-09-22'),
+      assignee('u10', 40, '2024-09-25'),
+    ],
+    submissions: [
+      submission('sub1', 't3', 'u3', '已完成小说大纲和前3章初稿，包含世界观设定和主要人物介绍。', 'text', 'approved', '2024-09-28', 1),
+      submission('sub2', 't3', 'u10', '完成了封面设计和章节排版模板。', 'design', 'approved', '2024-10-01', 1),
+      submission('sub3', 't3', 'u3', '第4-10章初稿完成，增加了新角色和支线剧情。', 'text', 'pending', '2024-10-05', 2),
+    ],
+    contributors: ['u3', 'u10'],
+    maxAssignees: 3,
     createdAt: '2024-09-20',
     tags: ['写作', '项目管理', 'UI Design'],
   },
@@ -222,6 +263,11 @@ export const initialTasks: Task[] = [
     reward: 3000,
     status: 'available',
     publisherId: 'u2',
+    publisherName: '李四',
+    assignees: [],
+    submissions: [],
+    contributors: [],
+    maxAssignees: 3,
     createdAt: '2024-10-10',
     tags: ['Python', '爬虫', 'API Integration'],
   },
@@ -237,6 +283,11 @@ export const initialTasks: Task[] = [
     reward: 6000,
     status: 'available',
     publisherId: 'u4',
+    publisherName: '赵六',
+    assignees: [],
+    submissions: [],
+    contributors: [],
+    maxAssignees: 3,
     createdAt: '2024-10-12',
     tags: ['视频剪辑', 'FFmpeg', 'Python'],
   },
@@ -253,6 +304,11 @@ export const initialTasks: Task[] = [
     reward: 15000,
     status: 'available',
     publisherId: 'u6',
+    publisherName: 'David',
+    assignees: [],
+    submissions: [],
+    contributors: [],
+    maxAssignees: 3,
     createdAt: '2024-10-15',
     tags: ['React', 'Node.js', 'TypeScript', 'UI Design'],
   },
@@ -268,7 +324,19 @@ export const initialTasks: Task[] = [
     reward: 7000,
     status: 'completed',
     publisherId: 'u10',
-    assigneeId: 'u7',
+    publisherName: 'Lisa',
+    assignees: [
+      assignee('u7', 70, '2024-08-05'),
+      assignee('u2', 30, '2024-08-10'),
+    ],
+    submissions: [
+      submission('sub4', 't7', 'u7', '完成文章大纲生成模块，支持自定义模板和风格选择。', 'text', 'approved', '2024-09-01', 1),
+      submission('sub5', 't7', 'u7', '完成内容续写功能，基于上下文智能预测后续内容。', 'code', 'approved', '2024-09-15', 1),
+      submission('sub6', 't7', 'u2', '完成 API 集成和语法检查模块。', 'code', 'approved', '2024-09-20', 1),
+    ],
+    contributors: ['u7', 'u2'],
+    completedAt: '2024-09-25',
+    maxAssignees: 3,
     createdAt: '2024-08-01',
     tags: ['写作', 'Python', 'API Integration'],
   },
@@ -284,6 +352,11 @@ export const initialTasks: Task[] = [
     reward: 4000,
     status: 'available',
     publisherId: 'u8',
+    publisherName: 'Sarah',
+    assignees: [],
+    submissions: [],
+    contributors: [],
+    maxAssignees: 3,
     createdAt: '2024-10-18',
     tags: ['TTS', 'Python', '视频剪辑'],
   },

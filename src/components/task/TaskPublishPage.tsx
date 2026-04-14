@@ -125,6 +125,11 @@ export function TaskPublishPage() {
       reward,
       status: 'available',
       publisherId: state.currentUser?.id,
+      publisherName: state.currentUser?.name,
+      assignees: [],
+      submissions: [],
+      contributors: [],
+      maxAssignees: 3,
       createdAt: new Date().toISOString().split('T')[0],
       tags: selectedSkills.map(s => s.tag),
     };

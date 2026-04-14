@@ -42,7 +42,33 @@ export interface User {
 }
 
 // 任务状态
-export type TaskStatus = 'available' | 'in-progress' | 'completed';
+export type TaskStatus = 'available' | 'in-progress' | 'completed' | 'packaged';
+
+// 提交类型
+export type SubmissionType = 'code' | 'text' | 'design';
+export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
+
+// 任务协作者
+export interface TaskAssignee {
+  userId: string;
+  name: string;
+  avatar?: string;
+  weight: number; // 贡献权重
+  joinedAt: string;
+}
+
+// 任务提交记录
+export interface TaskSubmission {
+  id: string;
+  taskId: string;
+  userId: string;
+  userName: string;
+  content: string;
+  type: SubmissionType;
+  status: SubmissionStatus;
+  timestamp: string;
+  version: number;
+}
 
 // 任务接口
 export interface Task {
@@ -53,7 +79,12 @@ export interface Task {
   reward: number;
   status: TaskStatus;
   publisherId?: string;
-  assigneeId?: string;
+  publisherName?: string;
+  assignees: TaskAssignee[]; // 协作者列表（替代原 assigneeId）
+  submissions: TaskSubmission[]; // 提交记录
+  contributors: string[]; // 已审核通过的贡献者 ID 列表
+  maxAssignees?: number; // 最大协人数，默认 3
+  completedAt?: string;
   createdAt: string;
   tags: SkillTag[];
 }

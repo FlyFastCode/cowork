@@ -9,7 +9,7 @@ import type { SkillTag, TaskStatus, User, Task, Skill } from '../types';
 
 // 任务相关 Hooks
 export function useTasks() {
-  const { state, addTask, updateTask, updateTaskStatus } = useApp();
+  const { state, addTask, updateTask, updateTaskStatus, addAssignee, removeAssignee, addSubmission, updateSubmissionStatus, removeSubmission, completeTask, addSkill } = useApp();
 
   const tasksByStatus = useMemo(
     () => (status: TaskStatus) =>
@@ -38,15 +38,58 @@ export function useTasks() {
     [state.tasks]
   );
 
+  // 按当前用户筛选
+  const publishedBy = useMemo(
+    () => (userId: string) => state.tasks.filter((t: Task) => t.publisherId === userId),
+    [state.tasks]
+  );
+
+  const assignedTo = useMemo(
+    () => (userId: string) =>
+      state.tasks.filter((t: Task) =>
+        (t.assignees || []).some(a => a.userId === userId)
+      ),
+    [state.tasks]
+  );
+
+  const joinable = useMemo(
+    () => state.tasks.filter(
+      (t: Task) =>
+        t.status === 'in-progress' &&
+        (t.assignees || []).length < (t.maxAssignees || 3)
+    ),
+    [state.tasks]
+  );
+
+  // 提交记录辅助
+  const getSubmissions = useMemo(
+    () => (taskId: string) => {
+      const task = state.tasks.find((t: Task) => t.id === taskId);
+      return task?.submissions || [];
+    },
+    [state.tasks]
+  );
+
   return {
     tasks: state.tasks,
     addTask,
     updateTask,
     updateTaskStatus,
+    addAssignee,
+    removeAssignee,
+    addSubmission,
+    updateSubmissionStatus,
+    removeSubmission,
+    completeTask,
+    addSkill,
     tasksByStatus,
     tasksByTag,
     getTaskById,
     searchTasks,
+    publishedBy,
+    assignedTo,
+    joinable,
+    getSubmissions,
   };
 }
 
@@ -81,6 +124,7 @@ export function useUsers() {
   );
 
   return {
+    state,
     users: state.users,
     currentUser: state.currentUser,
     updateUser,
@@ -94,7 +138,7 @@ export function useUsers() {
 
 // Skill 相关 Hooks
 export function useSkills() {
-  const { state, updateSkill } = useApp();
+  const { state, updateSkill, addSkill } = useApp();
 
   const sortedByRating = useMemo(
     () => [...state.skills].sort((a: Skill, b: Skill) => b.rating - a.rating),
@@ -124,6 +168,7 @@ export function useSkills() {
 
   return {
     skills: state.skills,
+    addSkill,
     updateSkill,
     sortedByRating,
     sortedByCalls,
@@ -169,6 +214,7 @@ export function useStats() {
       available: state.tasks.filter((t: Task) => t.status === 'available').length,
       inProgress: state.tasks.filter((t: Task) => t.status === 'in-progress').length,
       completed: state.tasks.filter((t: Task) => t.status === 'completed').length,
+      packaged: state.tasks.filter((t: Task) => t.status === 'packaged').length,
     }),
     [state.tasks]
   );
