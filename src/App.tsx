@@ -1,26 +1,32 @@
-import { useState } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AppProvider } from './context/AppContext';
+import { MainLayout } from './components/layout/MainLayout';
+import { DashboardPage } from './components/layout/DashboardPage';
+import { TaskPublishPage } from './components/task/TaskPublishPage';
+import { TaskPlazaPage } from './components/plaza/TaskPlazaPage';
+import { UserPlazaPage } from './components/plaza/UserPlazaPage';
+import { MarketplacePage } from './components/marketplace/MarketplacePage';
+import { AchievementPage } from './components/achievement/AchievementPage';
+import { TaskMatchingPage } from './components/matching/TaskMatchingPage';
 
-/**
- * App 组件 - 主应用程序入口
- * @returns {React.JSX.Element} React 应用程序主组件
- */
 function App() {
-  const [count, setCount] = useState<number>(0)
-
   return (
-    <div className="app">
-      <h1>OSQuestTemplate React App</h1>
-      <p>欢迎使用 React + TypeScript + Vite 基础框架</p>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-    </div>
-  )
+    <AppProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="task-publish" element={<TaskPublishPage />} />
+            <Route path="task-plaza" element={<TaskPlazaPage />} />
+            <Route path="task-matching" element={<TaskMatchingPage />} />
+            <Route path="user-plaza" element={<UserPlazaPage />} />
+            <Route path="marketplace" element={<MarketplacePage />} />
+            <Route path="achievement" element={<AchievementPage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AppProvider>
+  );
 }
 
-export default App
+export default App;
