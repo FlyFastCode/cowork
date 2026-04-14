@@ -1,0 +1,44 @@
+name: Build & Deploy to pages branch
+
+# 触发时机：PR 合并到 main 分支时
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm install
+
+      - name: 项目构建
+        run: npm run build
+
+      - name: 推送构建产物到 pages 分支
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          publish_branch: pages    # 推送到这个新分支
+          publish_dir: ./dist    # 你的构建输出目录（改这里！）
+          github_token: ${{ secrets.PAT }}
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          keep_files: true
+
+      - name: 部署 pages 分支
+        run: |
+          echo "✅ 构建完成"
+          echo "✅ 产物已推送到 pages 分支"
+          echo "✅ 自动部署完成"

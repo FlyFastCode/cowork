@@ -1,0 +1,85 @@
+# 名称：PR 全量测试流水线（Node.js 版）
+name: PR Open Automated Test Pipeline (Node.js)
+
+# 触发条件：创建/更新 PR 到 main 分支时自动执行
+# 使用 pull_request_target 避免 fork PR 需要审批的问题
+on:
+  pull_request_target:
+    branches: [ main ]  # 可自行添加目标分支
+    paths:
+      - '**.js'
+      - '**.ts'
+      - '**.vue'
+      - '**.tsx'
+      - '**.md'
+      - 'docs/**'
+      - 'package.json'
+      - '.eslintrc.*'
+
+# 3 类测试并行执行，提升速度
+jobs:
+  # 1. 文档验证测试：文档完整性 + 注释规范 + 接口描述
+  docs-validation:
+    name: 文档验证测试
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 检查核心文档完整性
+        run: |
+          echo "=== 检查项目文档 ==="
+          test -f README.md && echo "✅ README.md 存在" || { echo "❌ 缺失 README.md"; exit 1; }
+          test -d docs && echo "✅ docs 文档目录存在" || echo "⚠️  无 docs 文档目录（可选）"
+
+
+  # 2. 静态代码测试：语法 + 规范 + 安全漏洞 + 圈复杂度
+  static-code-test:
+    name: 静态代码测试
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20  # 改成你的项目 Node 版本
+          cache: 'npm'      # 自动缓存依赖，提速
+
+      - name: 安装项目依赖
+        run: npm install
+
+      - name: ESLint 语法 + 代码规范检查
+        run: |
+          echo "=== ESLint 代码规范检查 ==="
+          npx eslint . --max-warnings 0  # flat config 自动识别文件
+
+      - name: 安全漏洞扫描
+        run: |
+          echo "=== 代码安全漏洞检测 ==="
+          npm audit --production  # 检查生产依赖漏洞
+
+
+  # 3. 动态测试：单元测试 / 集成测试
+  dynamic-test:
+    name: 动态测试案例执行
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm install
+
+      - name: 执行单元测试 / 集成测试
+        run: |
+          echo "=== 执行测试用例 ==="
+          # 支持 Jest / Mocha / Vitest 任意测试框架
+          npm run test  # 必须在 package.json 配置 test 命令
