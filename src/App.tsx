@@ -13,7 +13,7 @@ import { MyTasksPage } from './components/workspace/MyTasksPage';
 function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/cowork/">
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<DashboardPage />} />
